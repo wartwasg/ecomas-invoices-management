@@ -12,4 +12,8 @@ import ternant.userModule.Roles;
 @Component
 public class AppConstants {
 
+    public static final String pageNumber = "0";
+    public static final String pageSize = "10";
+    public static final String orderBy = "amount";
+    public static final String order = "ASC";
 }

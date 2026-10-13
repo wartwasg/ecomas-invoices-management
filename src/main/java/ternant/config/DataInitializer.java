@@ -53,7 +53,7 @@ public class DataInitializer {
                     .orElseGet(() -> {
                                 User admin = User.builder()
                                         .email("superadmin@ledger.com")
-                                        .password(passwordEncoder.encode("SuperAdmin@123"))
+                                        .password(passwordEncoder.encode("SuperAdmin"))
                                         .invoices(null)
                                         .roles(roles)
                                         .build();

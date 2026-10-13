@@ -1,5 +1,6 @@
 package ternant.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,12 +23,18 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
     @Autowired
     public UserDetailsServiceImpl userDetailsService;
 
     @Autowired
-    public JwtFilter jwtFilter;
+    AuthEntryPointImpl authEntryPoint;
+
+    @Bean
+    public JwtFilter jwtFilter(){
+        return new JwtFilter();
+    };
 
     @Bean
     public PasswordEncoder passwordEncoder(){
@@ -53,11 +60,22 @@ public class SecurityConfig {
 
                 http.csrf(AbstractHttpConfigurer::disable);
 
-                http.authorizeHttpRequests(requests-> requests.requestMatchers("/api/**").authenticated());
+                http.authorizeHttpRequests(
+                        requests->
+                                requests
+                                        .requestMatchers("/api/auth/**").permitAll()
+
+                                        .requestMatchers("/api/invoices/**").authenticated()
+
+                                        .requestMatchers("/api/users/**").authenticated()
+                );
 
                 http.sessionManagement(session-> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-                http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                http.addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class);
+
+                http.exceptionHandling(exception ->
+                       exception.authenticationEntryPoint(authEntryPoint));
 
         return http.build();
     }

@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.web.filter.OncePerRequestFilter;
 import ternant.errorHandling.ApiResponse;
@@ -18,7 +19,8 @@ import ternant.errorHandling.InvalidJwtException;
 import ternant.errorHandling.JwtTokenIsNotAvailable;
 
 import java.io.IOException;
-@Service
+
+@Component
 public class JwtFilter extends OncePerRequestFilter {
 
     public static final Logger logger = LoggerFactory.getLogger(JwtFilter.class);
@@ -29,16 +31,21 @@ public class JwtFilter extends OncePerRequestFilter {
     UserDetailsServiceImpl userDetailsService;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request){
+        return request.getServletPath().startsWith("/api/auth/");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request
             , HttpServletResponse response
             , FilterChain filterChain) throws ServletException, IOException {
 
-        String bearerToken = jwtUtil.getTokenFromCookie(request);
+        String token = jwtUtil.getTokenFromCookie(request);
+
+        logger.debug("Extracted token: {} ", token);
 
         try{
-            if(bearerToken != null && bearerToken.startsWith("Bearer")){
-
-                String token = bearerToken.substring(7);
+            if(token != null){
 
                 if(jwtUtil.validateToken(token)){
                     String email = jwtUtil.getUsername(token);
@@ -58,19 +65,11 @@ public class JwtFilter extends OncePerRequestFilter {
             else {
                 throw new JwtTokenIsNotAvailable("Jwt Token is null");
             }
-            filterChain.doFilter(request,response);
         } catch (Exception e) {
 
             logger.error("Jwt Authentication failed : {}",e.getMessage());
 
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-
-            response.setContentType("application/json");
-
-            ApiResponse apiResponse = new ApiResponse("Jwt Authentication failed","failed");
-
-            response.getWriter().write(apiResponse.toString());
-
         }
+        filterChain.doFilter(request,response);
     }
 }

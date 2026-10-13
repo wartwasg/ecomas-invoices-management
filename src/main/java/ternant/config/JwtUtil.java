@@ -52,6 +52,13 @@ public class JwtUtil {
                 .path("/api")
                 .build();
     }
+    public ResponseCookie invalidateCookie(){
+        return ResponseCookie.from(cookieName,"")
+                .httpOnly(false)
+                .maxAge(expirationMs)
+                .path("/api")
+                .build();
+    }
     public Key key(){
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey));
     }
